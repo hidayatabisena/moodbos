@@ -1,0 +1,95 @@
+app MoodBos {
+  wasp: {
+    version: "^0.11.1"
+  },
+  title: "MoodBos",
+  client: {
+    rootComponent: import { Layout } from "@client/Layout.jsx"
+  },
+  db: {
+    prisma: {
+      clientPreviewFeatures: ["extendedWhereUnique"]
+    }
+  },
+  auth: {
+    userEntity: User,
+    methods: {
+      usernameAndPassword: {}
+    },
+    onAuthFailedRedirectTo: "/login",
+    onAuthSucceededRedirectTo: "/"
+  }
+}
+
+route LoginRoute { path: "/login", to: LoginPage }
+page LoginPage {
+  component: import Login from "@client/pages/auth/Login.jsx"
+}
+route SignupRoute { path: "/signup", to: SignupPage }
+page SignupPage {
+  component: import Signup from "@client/pages/auth/Signup.jsx"
+}
+
+entity User {=psl
+    id       Int    @id @default(autoincrement())
+    username String @unique
+    password String
+    posts    Post[]
+psl=}
+
+entity Post {=psl
+    id      Int    @id @default(autoincrement())
+    title   String
+    content String
+    type    String
+    user    User   @relation(fields: [userId], references: [id])
+    userId  Int
+psl=}
+
+action createPost {
+  fn: import { createPost } from "@server/actions.js",
+  entities: [Post]
+}
+
+action updatePost {
+  fn: import { updatePost } from "@server/actions.js",
+  entities: [Post]
+}
+
+action deletePost {
+  fn: import { deletePost } from "@server/actions.js",
+  entities: [Post]
+}
+
+query getPosts {
+  fn: import { getPosts } from "@server/queries.js",
+  entities: [Post]
+}
+
+query getPost {
+  fn: import { getPost } from "@server/queries.js",
+  entities: [Post]
+}
+
+query getUserPosts {
+  fn: import { getUserPosts } from "@server/queries.js",
+  entities: [User, Post]
+}
+
+route HomePageRoute { path: "/", to: HomePage }
+page HomePage {
+  component: import { HomePage } from "@client/pages/Home.jsx",
+  authRequired: false
+}
+
+route PostRoute { path: "/post/:postId", to: PostPage }
+page PostPage {
+  component: import { Post } from "@client/pages/Post.jsx",
+  authRequired: false
+}
+
+route UserPostsRoute { path: "/user/:userId/posts", to: UserPostsPage }
+page UserPostsPage {
+  component: import { UserPosts } from "@client/UserPosts.jsx",
+  authRequired: true
+}
